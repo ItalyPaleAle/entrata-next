@@ -5,6 +5,7 @@ import { NextRequest } from 'next/server'
 const redis = Redis.fromEnv()
 
 const redisKey = 'areas'
+const redisTtl = 1800 // In seconds
 
 export type AreaStatus = {
     id: number
@@ -17,6 +18,14 @@ const defaultAreas: AreaStatus[] = [
     { id: 1, name: 'Internal', active: false },
 ]
 
+function getRedisKey() {
+    if (process.env.VERCEL_BRANCH_URL) {
+        return redisKey + '-' + process.env.VERCEL_BRANCH_URL
+    }
+
+    return redisKey
+}
+
 export function CheckPin(request: NextRequest): boolean {
     if (!process.env.LOCAL_PIN) {
         throw Error('Env variable LOCAL_PIN not set')
@@ -27,9 +36,10 @@ export function CheckPin(request: NextRequest): boolean {
 
 export async function GetAreas(): Promise<AreaStatus[]> {
     // Get the value, or set the default one if it doesn't exist
-    const res = await redis.set<AreaStatus[] | null>(redisKey, defaultAreas, {
+    const res = await redis.set<AreaStatus[] | null>(getRedisKey(), defaultAreas, {
         nx: true,
         get: true,
+        ex: redisTtl || undefined,
     })
     if (!res) {
         // If the response is empty, the item was just created
@@ -51,7 +61,9 @@ export async function UpdateArea(areaId: number, active: boolean): Promise<AreaS
         }
     }
 
-    const res = await redis.set(redisKey, areas)
+    const res = await redis.set(getRedisKey(), areas, {
+        ex: redisTtl || undefined,
+    })
     if (res != 'OK') {
         throw new Error('Failed to perform Redis operation: response is not OK')
     }
@@ -68,7 +80,7 @@ export async function DeactivateAllAreas() {
         }
     })
 
-    const res = await redis.set(redisKey, areas)
+    const res = await redis.set(getRedisKey(), areas)
     if (res != 'OK') {
         throw new Error('Failed to perform Redis operation: response is not OK')
     }
