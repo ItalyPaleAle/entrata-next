@@ -10,8 +10,8 @@ const redisTtl = 1800 // In seconds
 
 // Rate limiting constants
 const maxFailedAttempts = 3
-const rateLimitWindowSeconds = 30 // 30s window
-const rateLimitBlockSeconds = 30 // 30s block after limit reached
+const rateLimitWindowSeconds = 20 // 20s window
+const rateLimitBlockSeconds = 20 // 20s block after limit reached
 
 export type AreaStatus = {
     id: number

@@ -39,6 +39,12 @@ const MainComponent = () => {
             }, 1500)
 
             setAttemptDelay(err.delay)
+            if (err.delay > 0) {
+                // Clear after the delay ends
+                setTimeout(() => {
+                    setAttemptDelay(0)
+                }, err.delay)
+            }
         } else {
             setPin('')
             setError(err)
