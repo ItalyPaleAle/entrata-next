@@ -22,6 +22,12 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="en">
+            <meta
+                name="viewport"
+                content="width=device-width, initial-scale=1, shrink-to-fit=no, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+            />
+            <meta name="apple-mobile-web-app-capable" content="yes" />
+            <meta name="apple-mobile-web-app-status-bar-style" content="default" />
             <body
                 className={`${openSans.className} bg-stone-100 leading-normal tracking-wide text-gray-900 antialiased`}>
                 <div className="mx-auto flex min-h-screen w-full max-w-96 flex-col justify-between px-3 py-2">
