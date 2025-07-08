@@ -4,8 +4,14 @@ import { NextRequest } from 'next/server'
 // Initialize Redis
 const redis = Redis.fromEnv()
 
-const redisKey = 'areas'
+const areasKey = 'areas'
+const failedAttemptsKey = 'failed-attempts'
 const redisTtl = 1800 // In seconds
+
+// Rate limiting constants
+const maxFailedAttempts = 3
+const rateLimitWindowSeconds = 30 // 30s window
+const rateLimitBlockSeconds = 30 // 30s block after limit reached
 
 export type AreaStatus = {
     id: number
@@ -18,12 +24,12 @@ const defaultAreas: AreaStatus[] = [
     { id: 1, name: 'Internal', active: false },
 ]
 
-function getRedisKey() {
+function getRedisKey(key: string) {
     if (process.env.VERCEL_BRANCH_URL) {
-        return redisKey + '-' + process.env.VERCEL_BRANCH_URL
+        return key + '-' + process.env.VERCEL_BRANCH_URL
     }
 
-    return redisKey
+    return key
 }
 
 export function CheckPin(request: NextRequest): boolean {
@@ -36,7 +42,7 @@ export function CheckPin(request: NextRequest): boolean {
 
 export async function GetAreas(): Promise<AreaStatus[]> {
     // Get the value, or set the default one if it doesn't exist
-    const res = await redis.set<AreaStatus[] | null>(getRedisKey(), defaultAreas, {
+    const res = await redis.set<AreaStatus[] | null>(getRedisKey(areasKey), defaultAreas, {
         nx: true,
         get: true,
         ex: redisTtl || undefined,
@@ -61,7 +67,7 @@ export async function UpdateArea(areaId: number, active: boolean): Promise<AreaS
         }
     }
 
-    const res = await redis.set(getRedisKey(), areas, {
+    const res = await redis.set(getRedisKey(areasKey), areas, {
         ex: redisTtl || undefined,
     })
     if (res != 'OK') {
@@ -80,8 +86,58 @@ export async function DeactivateAllAreas() {
         }
     })
 
-    const res = await redis.set(getRedisKey(), areas)
+    const res = await redis.set(getRedisKey(areasKey), areas)
     if (res != 'OK') {
         throw new Error('Failed to perform Redis operation: response is not OK')
+    }
+}
+
+export async function RecordFailedAttempt(): Promise<boolean> {
+    const now = Date.now()
+
+    // Get the current attempts from Redis and filter for only those within the rate limit window
+    const key = getRedisKey(failedAttemptsKey)
+    const attempts = ((await redis.get<number[]>(key)) || []).filter(
+        (attemptTime) => now - attemptTime < rateLimitWindowSeconds * 1000,
+    )
+
+    // Add the current attempt timestamp
+    attempts.push(now)
+
+    // Store the updated attempts list
+    await redis.set(getRedisKey(failedAttemptsKey), attempts, {
+        ex: rateLimitWindowSeconds + rateLimitBlockSeconds,
+    })
+
+    // Return false if rate limited
+    return attempts.length <= maxFailedAttempts
+}
+
+export async function CanAttempt(): Promise<{ allowed: boolean; delay: number }> {
+    const now = Date.now()
+
+    // Get the current attempts from Redis and filter for only those within the rate limit window
+    const key = getRedisKey(failedAttemptsKey)
+    const attempts = ((await redis.get<number[]>(key)) || []).filter(
+        (attemptTime) => now - attemptTime < rateLimitWindowSeconds * 1000,
+    )
+
+    if (attempts.length >= maxFailedAttempts) {
+        // We're rate limited
+        // Calculate when the oldest attempt will expire from the window
+        const timeToReset = Math.ceil(
+            (attempts[0] + (rateLimitWindowSeconds + rateLimitBlockSeconds) * 1000 - now) / 1000,
+        )
+
+        return {
+            allowed: false,
+            delay: Math.max(0, timeToReset),
+        }
+    }
+
+    // Not rate limited
+    return {
+        allowed: true,
+        delay: 0,
     }
 }
