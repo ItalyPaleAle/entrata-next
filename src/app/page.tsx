@@ -8,13 +8,12 @@ import PinPad from '@/components/PinPad'
 import Spinner from '@/components/Spinner'
 import StatusView from '@/components/StatusView'
 import { InvalidTokenError, PinError } from '@/lib/use-api'
+import Container from '@/components/Container'
 
 export default function RootPage() {
     return (
         <Auth>
-            <main className="my-2 rounded-lg border border-gray-300 bg-white p-4 shadow">
-                <MainComponent />
-            </main>
+            <MainComponent />
         </Auth>
     )
 }
@@ -73,14 +72,14 @@ const MainComponent = () => {
 
     if (!isAuthenticated || !user || tokenError) {
         return (
-            <>
+            <Container>
                 <p>Your session has expired or the authentication failed.</p>
                 <button
                     onClick={() => loginWithRedirect()}
                     className="mt-4 cursor-pointer rounded bg-blue-500 px-4 py-2 font-bold text-white hover:bg-blue-700">
                     Authenticate
                 </button>
-            </>
+            </Container>
         )
     }
 
@@ -91,11 +90,11 @@ const MainComponent = () => {
 
     // No PIN, show pin pad
     return (
-        <>
+        <Container>
             <div className="my-2 rounded-lg border border-gray-300 bg-white p-2 text-sm shadow">
                 👋 {user?.name || 'Entrata user'}
             </div>
             <PinPad setPin={setPin} attemptDelay={attemptDelay} pinError={pinError} />
-        </>
+        </Container>
     )
 }

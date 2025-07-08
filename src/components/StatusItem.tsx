@@ -49,12 +49,12 @@ export default function StatusItem({ areaId, name, active, onToggle: onClick }: 
     )
 
     return (
-        <li className="list-none" tabIndex={0} onClick={handleClick} onKeyUp={handleKeyPress}>
+        <li className="list-none m-2" tabIndex={0} onClick={handleClick} onKeyUp={handleKeyPress}>
             <span
                 className={
                     hover
-                        ? `m-2 flex cursor-pointer flex-row items-center rounded-lg border border-gray-300 bg-gray-300 p-2 shadow`
-                        : `m-2 flex cursor-pointer flex-row items-center rounded-lg border border-gray-300 p-2 shadow hover:bg-gray-300`
+                        ? `flex cursor-pointer flex-row items-center rounded-lg border border-gray-300 bg-gray-300 p-2 shadow`
+                        : `flex cursor-pointer flex-row items-center rounded-lg border border-gray-300 p-2 shadow hover:bg-gray-300`
                 }>
                 {areaId >= 0 ? (
                     <>

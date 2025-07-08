@@ -105,7 +105,7 @@ export default function StatusView({
 
     return (
         <div className="my-2 rounded-lg border border-gray-300 bg-white p-2 shadow">
-            <p>Here&apos;s the current status. Tap a zone to activate/deactivate.</p>
+            <p className='mx-2 my-1'>Here&apos;s the current status. Tap a zone to activate/deactivate.</p>
             <ul className="mx-2 my-4">
                 {zoneList.map(({ id, name, active }) => (
                     <StatusItem
