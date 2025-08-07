@@ -5,6 +5,14 @@ export class EntrataClaims {
     payload?: string
 
     constructor(user: User | null) {
+        // Check if we're overriding the URL during development
+        if (process.env.NEXT_PUBLIC_SERVER_URL == 'local') {
+            // Set to / to make calls to the local URL
+            this.url = '/'
+            this.payload = '-'
+            return
+        }
+
         const namespace = process.env.NEXT_PUBLIC_ID_TOKEN_NAMESPACE
         if (!namespace) {
             throw Error('Env variable NEXT_PUBLIC_ID_TOKEN_NAMESPACE not set')
@@ -22,10 +30,7 @@ export class EntrataClaims {
 
             // Check if we're overriding the URL during development
             this.url = data.url
-            if (process.env.NEXT_PUBLIC_SERVER_URL == 'local') {
-                // Set to empty to make calls to the local URL
-                this.url = ''
-            } else if (process.env.NEXT_PUBLIC_SERVER_URL) {
+            if (process.env.NEXT_PUBLIC_SERVER_URL) {
                 this.url = process.env.NEXT_PUBLIC_SERVER_URL
             }
 
