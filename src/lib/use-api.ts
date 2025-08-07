@@ -71,7 +71,10 @@ export const useApi = <T>(
 
                 try {
                     const entrataClaims = new EntrataClaims(user)
-                    if (!entrataClaims?.payload || !entrataClaims.url) {
+                    if (process.env.NEXT_PUBLIC_SERVER_URL == 'local') {
+                        entrataClaims.payload = ''
+                        entrataClaims.url = ''
+                    } else if (!entrataClaims?.payload || !entrataClaims.url) {
                         throw new EntrataClaimsMissingError()
                     }
 
